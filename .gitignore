@@ -1,0 +1,10 @@
+# folders to ignore
+/dist
+/node_modules
+
+# sensitive files to ignore
+sheetsCredentials.json
+sheetsToken.json
+
+# other
+ignoreThis.txt
