@@ -4,8 +4,40 @@ import { google as Google } from 'googleapis'
 import { default as Readline } from 'readline'
 import FileSystem from 'fs/promises'
 
+let sheetsAuthClient: OAuth2Client
+try {
+	const sheetsCredentialsPath = './src/credentials/sheetsCredentials.json'
+	const sheetsScopes = ['https://www.googleapis.com/auth/spreadsheets.readonly'] // If modifying these scopes, delete token.json.
+	const sheetsTokenPath = './src/credentials/sheetsToken.json'
+	const content = await FileSystem.readFile(sheetsCredentialsPath, 'utf-8')
+	sheetsAuthClient = await authorize({
+		credentials: JSON.parse(content),
+		scopes: sheetsScopes,
+		tokenPath: sheetsTokenPath
+	})
+} catch (error) {
+	throw error('No sheetsCredentials.json, check readme.md')
+}
+
+let gmailAuthClient: OAuth2Client
+try {
+	const gmailCredentialsPath = './src/credentials/emailCredentials.json'
+	const gmailTokenPath = './src/credentials/emailToken.json'
+	const gmailScopes = ['https://www.googleapis.com/auth/gmail.send']
+	const content = await FileSystem.readFile(gmailCredentialsPath, 'utf-8')
+	gmailAuthClient = await authorize({
+		credentials: JSON.parse(content),
+		scopes: gmailScopes,
+		tokenPath: gmailTokenPath
+	})
+} catch (error) {
+	throw error('No emailCredentials.json, check readme.md')
+}
+
+export { sheetsAuthClient, gmailAuthClient }
+
 // Create an OAuth2 client with the given credentials
-export async function authorize({
+async function authorize({
 	credentials,
 	scopes,
 	tokenPath

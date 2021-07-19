@@ -1,51 +1,18 @@
-import FileSystem from 'fs/promises'
-import { authorize } from './googleApis.js'
 import { google as Google } from 'googleapis'
-import { OAuth2Client } from 'google-auth-library'
 import expressJs from 'express'
 import cors from 'cors'
 import { Release } from './typings.js'
-
-let sheetsAuthClient: OAuth2Client
-let gmailAuthClient: OAuth2Client
-const sheetsTokenPath = './src/credentials/sheetsToken.json'
-const gmailTokenPath = './src/credentials/emailToken.json'
-const sheetsCredentialsPath = './src/credentials/sheetsCredentials.json'
-const gmailCredentialsPath = './src/credentials/emailCredentials.json'
-const sheetsScopes = ['https://www.googleapis.com/auth/spreadsheets.readonly'] // If modifying these scopes, delete token.json.
-const gmailScopes = ['https://www.googleapis.com/auth/gmail.send']
-
-try {
-	const content = await FileSystem.readFile(sheetsCredentialsPath, 'utf-8')
-	sheetsAuthClient = await authorize({
-		credentials: JSON.parse(content),
-		scopes: sheetsScopes,
-		tokenPath: sheetsTokenPath
-	})
-} catch (error) {
-	throw error('No sheetsCredentials.json, check readme.md')
-}
-
-try {
-	const content = await FileSystem.readFile(gmailCredentialsPath, 'utf-8')
-	gmailAuthClient = await authorize({
-		credentials: JSON.parse(content),
-		scopes: gmailScopes,
-		tokenPath: gmailTokenPath
-	})
-} catch (error) {
-	throw error('No emailCredentials.json, check readme.md')
-}
+import { gmailAuthClient, sheetsAuthClient } from './googleApis.js'
 
 const express = expressJs()
 const sheets = Google.sheets({ version: 'v4', auth: sheetsAuthClient })
 
-express.use(cors())
 express.listen(3000, () => {
 	console.log('Express is running on port 3000.')
 })
 
-express.get('/Sheets', async (request, response) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+express.get('/Sheets', cors() as any, async (request, response) => {
 	try {
 		const id = request.query.id as string,
 			range = request.query.range as string,
@@ -68,7 +35,7 @@ express.get('/Email', async (request, response) => {
 		subject = request.query.subject as string,
 		message = request.query.message as string
 
-	response.json(sendEmail(to, subject, message, gmailAuthClient))
+	response.json(sendEmail(to, subject, message))
 })
 
 async function getRows(
@@ -144,15 +111,10 @@ function rowIsFilledOut(row: string[]): boolean {
 	}
 }
 
-function sendEmail(
-	to: string,
-	subject: string,
-	message: string,
-	auth: OAuth2Client
-) {
+function sendEmail(to: string, subject: string, message: string) {
 	try {
-		Google.gmail({ version: 'v1', auth }).users.messages.send({
-			auth: auth,
+		Google.gmail({ version: 'v1', auth: gmailAuthClient }).users.messages.send({
+			auth: gmailAuthClient,
 			userId: 'buffetsbot@gmail.com',
 			requestBody: {
 				raw: makeBody(to, 'buffetsbot@gmail.com', subject, message)
