@@ -18,14 +18,16 @@
 	},
 	"dependencies": {
 		"cors": "^2.8.5",
-		"express": "^4.17.1",
+		"express": "^5.0.0-alpha.8",
 		"file-system": "^2.2.2",
-		"googleapis": "39.2.0"
+		"googleapis": "39.2.0",
+		"snoowrap": "^1.23.0"
 	},
 	"devDependencies": {
 		"@types/cors": "2.8.12",
 		"@types/express": "^4.17.13",
 		"@types/node": "^16.3.3",
+		"@types/request": "^2.48.6",
 		"@typescript-eslint/eslint-plugin": "^4.15.0",
 		"@typescript-eslint/parser": "^4.15.0",
 		"eslint": "^7.18.0",

@@ -3,13 +3,14 @@ import expressJs from 'express'
 import cors from 'cors'
 import { Release } from './typings.js'
 import { gmailAuthClient, sheetsAuthClient } from './googleApis.js'
+import { credentials } from './credentials/redditCredentials.js'
+import snoowrap from 'snoowrap'
 
 const express = expressJs()
 const sheets = Google.sheets({ version: 'v4', auth: sheetsAuthClient })
+const reddit = new snoowrap(credentials)
 
-express.listen(3000, () => {
-	console.log('Express is running on port 3000.')
-})
+express.listen(3000, () => console.log('Express is running on port 3000.'))
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 express.get('/Sheets', cors() as any, async (request, response) => {
@@ -26,16 +27,32 @@ express.get('/Sheets', cors() as any, async (request, response) => {
 			response.json(await getRows(id, range))
 		}
 	} catch (error) {
-		console.log(`Error in get request:\n ${error}`)
+		console.log(`Error in /Sheets request:\n ${error}`)
 	}
 })
 
 express.get('/Email', async (request, response) => {
-	const to = request.query.to as string,
-		subject = request.query.subject as string,
-		message = request.query.message as string
+	try {
+		const to = request.query.to as string,
+			subject = request.query.subject as string,
+			message = request.query.message as string
 
-	response.json(sendEmail(to, subject, message))
+		response.json(sendEmail(to, subject, message))
+	} catch (error) {
+		console.log(`Error in /Email request:\n ${error}`)
+	}
+})
+
+express.get('/Reddit', async (_request, response) => {
+	try {
+		const redditResponse = await reddit
+			.getSubreddit('femboy')
+			.getHot({ limit: 1 })
+		const topPost = redditResponse.filter((post) => post.archived === false)
+		response.json(topPost[0].url)
+	} catch (error) {
+		console.log(`Error in /Reddit request:\n ${error}`)
+	}
 })
 
 async function getRows(
