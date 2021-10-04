@@ -1,18 +1,18 @@
 import { google as Google } from 'googleapis'
 import expressJs from 'express'
 import cors from 'cors'
-import { Release } from './typings.js'
+import { GithubTreeResponse, Release } from './typings.js'
 import { gmailAuthClient, sheetsAuthClient } from './googleApis.js'
-import { credentials } from './credentials/redditCredentials.js'
+import { redditCredentials, githubToken } from './credentials/credentials.js'
 import snoowrap from 'snoowrap'
+import { request as githubRequest } from '@octokit/request'
 
 const express = expressJs()
 const sheets = Google.sheets({ version: 'v4', auth: sheetsAuthClient })
-const reddit = new snoowrap(credentials)
+const reddit = new snoowrap(redditCredentials)
 
 express.listen(3000, () => console.log('Express is running on port 3000.'))
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 express.get('/Sheets', cors() as any, async (request, response) => {
 	try {
 		const id = request.query.id as string,
@@ -43,7 +43,7 @@ express.get('/Email', async (request, response) => {
 	}
 })
 
-express.get('/Reddit', async (_request, response) => {
+express.get('/Reddit/Top/Femboy', async (_request, response) => {
 	try {
 		const redditResponse = await reddit
 			.getSubreddit('femboy')
@@ -51,9 +51,71 @@ express.get('/Reddit', async (_request, response) => {
 		const topPost = redditResponse.filter((post) => post.archived === false)
 		response.json(topPost[0].url)
 	} catch (error) {
-		console.log(`Error in /Reddit request:\n ${error}`)
+		console.log(`Error in /Reddit/Top/Femboy request:\n ${error}`)
 	}
 })
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+express.get('/Github', async (_request, response) => {
+	const pathArray = await getPaths(
+		'3640b37b4e69e3acd25eeb4b1d756e06a67bb6a9',
+		'https://github.com/buffet-time/testMusicFolder/blob/main'
+	)
+	if (pathArray) {
+		response.json(pathArray)
+	} else {
+		response.json(['Error'])
+	}
+})
+
+async function getPaths(
+	treeSha: string,
+	directory: string
+): Promise<string[] | null> {
+	const pathArray: string[] = []
+	const treeResponse = await getTree(treeSha)
+	if (!treeResponse) {
+		return null
+	}
+
+	for (let x = 0; x < treeResponse.data.tree.length; x++) {
+		const tree = treeResponse.data.tree[x]
+		if (tree.type === 'tree' && tree.sha && tree.path) {
+			const returnedPathArray = await getPaths(tree.sha, tree.path)
+
+			if (returnedPathArray) {
+				returnedPathArray.forEach((path) => {
+					pathArray.push(`${directory}/${path}`)
+				})
+			}
+		} else if (tree.type === 'blob') {
+			if (tree.path) {
+				pathArray.push(`${directory}/${tree.path}?raw=true`)
+			}
+		}
+	}
+
+	return pathArray
+}
+
+async function getTree(treeSha: string): Promise<GithubTreeResponse | null> {
+	try {
+		return await githubRequest(
+			'GET /repos/{owner}/{repo}/git/trees/{tree_sha}',
+			{
+				headers: {
+					authorization: githubToken
+				},
+				owner: 'buffet-time',
+				repo: 'testMusicFolder',
+				tree_sha: treeSha
+			}
+		)
+	} catch (error: any) {
+		console.log(`Error in /Github request:\n ${error}`)
+		return null
+	}
+}
 
 async function getRows(
 	spreadsheetId: string,

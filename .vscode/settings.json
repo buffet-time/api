@@ -2,11 +2,17 @@
 	"typescript.tsdk": "node_modules\\typescript\\lib",
 	"editor.defaultFormatter": "esbenp.prettier-vscode",
 	"editor.formatOnSave": true,
-	"editor.codeActionsOnSave": {
-		"source.fixAll.tslint": true
-	},
-	"prettier.semi": false,
-	"[typescript]": {
-		"editor.defaultFormatter": "esbenp.prettier-vscode"
+	"eslint.validate": ["javascript"],
+	"editor.tabSize": 2,
+	"editor.insertSpaces": false,
+	"search.exclude": {
+		"**/.firebase": true,
+		"**/.github": true,
+		"**/dist": true,
+		"**/node_modules": true,
+		"**/.yarn": true,
+		"**acronymWords.json": true,
+		".eslintcache": true,
+		"yarn.lock": true
 	}
 }

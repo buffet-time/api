@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { OAuth2Client } from 'google-auth-library'
 import { google as Google } from 'googleapis'
 import { default as Readline } from 'readline'
@@ -16,7 +15,7 @@ try {
 		tokenPath: sheetsTokenPath
 	})
 } catch (error) {
-	throw error('No sheetsCredentials.json, check readme.md')
+	throw new Error('No sheetsCredentials.json, check readme.md')
 }
 
 let gmailAuthClient: OAuth2Client
@@ -31,7 +30,7 @@ try {
 		tokenPath: gmailTokenPath
 	})
 } catch (error) {
-	throw error('No emailCredentials.json, check readme.md')
+	throw new Error('No emailCredentials.json, check readme.md')
 }
 
 export { sheetsAuthClient, gmailAuthClient }
