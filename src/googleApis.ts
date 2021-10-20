@@ -3,12 +3,12 @@ import { google as Google } from 'googleapis'
 import { default as Readline } from 'readline'
 import FileSystem from 'fs/promises'
 
-let sheetsAuthClient: OAuth2Client
+let sheetsAuthClient: OAuth2Client, gmailAuthClient: OAuth2Client
 try {
-	const sheetsCredentialsPath = './src/credentials/sheetsCredentials.json'
-	const sheetsScopes = ['https://www.googleapis.com/auth/spreadsheets.readonly'] // If modifying these scopes, delete token.json.
-	const sheetsTokenPath = './src/credentials/sheetsToken.json'
-	const content = await FileSystem.readFile(sheetsCredentialsPath, 'utf-8')
+	const sheetsCredentialsPath = './src/credentials/sheetsCredentials.json',
+		sheetsScopes = ['https://www.googleapis.com/auth/spreadsheets.readonly'], // If modifying these scopes, delete token.json.
+		sheetsTokenPath = './src/credentials/sheetsToken.json',
+		content = await FileSystem.readFile(sheetsCredentialsPath, 'utf-8')
 	sheetsAuthClient = await authorize({
 		credentials: JSON.parse(content),
 		scopes: sheetsScopes,
@@ -18,12 +18,11 @@ try {
 	throw new Error('No sheetsCredentials.json, check readme.md')
 }
 
-let gmailAuthClient: OAuth2Client
 try {
-	const gmailCredentialsPath = './src/credentials/emailCredentials.json'
-	const gmailTokenPath = './src/credentials/emailToken.json'
-	const gmailScopes = ['https://www.googleapis.com/auth/gmail.send']
-	const content = await FileSystem.readFile(gmailCredentialsPath, 'utf-8')
+	const gmailCredentialsPath = './src/credentials/emailCredentials.json',
+		gmailTokenPath = './src/credentials/emailToken.json',
+		gmailScopes = ['https://www.googleapis.com/auth/gmail.send'],
+		content = await FileSystem.readFile(gmailCredentialsPath, 'utf-8')
 	gmailAuthClient = await authorize({
 		credentials: JSON.parse(content),
 		scopes: gmailScopes,
@@ -45,17 +44,18 @@ async function authorize({
 	scopes: string[]
 	tokenPath: string
 }): Promise<OAuth2Client> {
-	const { client_secret, client_id, redirect_uris } = credentials.installed
-	const oAuth2Client = new Google.auth.OAuth2(
-		client_id,
-		client_secret,
-		redirect_uris[0]
-	)
+	const { client_secret, client_id, redirect_uris } = credentials.installed,
+		oAuth2Client = new Google.auth.OAuth2(
+			client_id,
+			client_secret,
+			redirect_uris[0]
+		)
 
 	// Check if we have previously stored a token.
 	try {
-		const token = await FileSystem.readFile(tokenPath, 'utf-8')
-		oAuth2Client.setCredentials(JSON.parse(token))
+		oAuth2Client.setCredentials(
+			JSON.parse(await FileSystem.readFile(tokenPath, 'utf-8'))
+		)
 	} catch (error) {
 		await getNewToken(oAuth2Client, scopes, tokenPath)
 	}
@@ -82,10 +82,10 @@ function getNewToken(
 			readline.close()
 			resolve(
 				new Promise((resolve) =>
-					oAuth2Client.getToken(code, async (err, token) => {
-						if (err || !token) {
+					oAuth2Client.getToken(code, async (err: any, token: any) => {
+						if (err || !token)
 							return console.error('Error retrieving access token', err)
-						}
+
 						oAuth2Client.setCredentials(token)
 						try {
 							await FileSystem.writeFile(
@@ -93,7 +93,7 @@ function getNewToken(
 								JSON.stringify(token, null, 2)
 							)
 						} catch (error) {
-							// console.log(error)
+							console.log(error)
 						}
 						resolve()
 					})

@@ -12,8 +12,8 @@
 	},
 	"type": "module",
 	"scripts": {
-		"serve": "yarn compile && yarn execute",
-		"compile": "npx tsc",
+		"serve": "pnpm compile && pnpm execute",
+		"compile": "pnpm exec tsc",
 		"execute": "node ./dist/main.js"
 	},
 	"dependencies": {
@@ -35,6 +35,7 @@
 		"eslint": "^7.32.0",
 		"eslint-config-prettier": "^8.3.0",
 		"eslint-plugin-prettier": "^4.0.0",
+		"google-auth-library": "3.1.2",
 		"prettier": "^2.4.1",
 		"typescript": "^4.1.3"
 	}
