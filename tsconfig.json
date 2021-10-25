@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "esnext",
 		"module": "esnext",
-		"outDir": "./dist",
+		"outDir": "dist",
 		"moduleResolution": "node",
 
 		"strict": true,
@@ -17,7 +17,7 @@
 		"experimentalDecorators": true,
 		"useDefineForClassFields": true,
 
-		"noEmit": true,
+		"noEmit": false,
 		"noImplicitReturns": true,
 		"noUnusedParameters": true,
 		"allowUnreachableCode": false,
