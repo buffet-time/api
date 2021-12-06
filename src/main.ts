@@ -19,9 +19,13 @@ express.get('/Sheets', cors() as any, async (request, response) => {
 			range = request.query.range as string,
 			index = Number(request.query.index as string),
 			rows = request.query.rows as string
-		if (rows === 'true') response.json(await getNumberOfRows(id, range))
-		else if (index) response.json(await getRows(id, range, index))
-		else response.json(await getRows(id, range))
+		if (rows === 'true') {
+			response.json(await getNumberOfRows(id, range))
+		} else if (index) {
+			response.json(await getRows(id, range, index))
+		} else {
+			response.json(await getRows(id, range))
+		}
 	} catch (error) {
 		console.log(`Error in /Sheets request:\n ${error}`)
 	}
@@ -52,13 +56,12 @@ express.get('/Reddit/Top/Femboy', async (_request, response) => {
 })
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-express.get('/Github', async (_request, response) => {
+express.get('/Github', cors() as any, async (_request, response) => {
 	const pathArray = await getPaths(
 		'3640b37b4e69e3acd25eeb4b1d756e06a67bb6a9',
 		'https://github.com/buffet-time/testMusicFolder/blob/main'
 	)
-	if (pathArray) response.json(pathArray)
-	else response.json(['Error'])
+	pathArray ? response.json(pathArray) : response.json(['Error'])
 })
 
 async function getPaths(
@@ -67,19 +70,23 @@ async function getPaths(
 ): Promise<string[] | null> {
 	const pathArray: string[] = [],
 		treeResponse = await getTree(treeSha)
-	if (!treeResponse) return null
+	if (!treeResponse) {
+		return null
+	}
 
 	for (let x = 0; x < treeResponse.data.tree.length; x++) {
 		const tree = treeResponse.data.tree[x]
 		if (tree.type === 'tree' && tree.sha && tree.path) {
 			const returnedPathArray = await getPaths(tree.sha, tree.path)
 
-			if (returnedPathArray)
-				returnedPathArray.forEach((path) =>
+			if (returnedPathArray) {
+				for (const path of returnedPathArray) {
 					pathArray.push(`${directory}/${path}`)
-				)
-		} else if (tree.type === 'blob')
-			if (tree.path) pathArray.push(`${directory}/${tree.path}?raw=true`)
+				}
+			}
+		} else if (tree.type === 'blob' && tree.path) {
+			pathArray.push(`${directory}/${tree.path}?raw=true`)
+		}
 	}
 
 	return pathArray
@@ -109,45 +116,50 @@ async function getRows(
 	range: string,
 	index?: number
 ): Promise<string[][]> {
-	return new Promise((resolve) => {
+	return new Promise((resolve) =>
 		sheets.spreadsheets.values.get(
 			{
 				spreadsheetId: spreadsheetId,
 				range: range
 			},
 			(error, response) => {
-				if (error) console.log(`Error in getRows():\n ${error}`)
-				else {
-					if (index && response && response.data.values)
-						resolve(response.data.values[index])
-					else if (response && response.data.values)
-						resolve(response.data.values)
+				if (error) {
+					console.log(`Error in getRows():\n ${error}`)
+				}
+				if (index && response?.data.values) {
+					resolve(response.data.values[index])
+				} else if (response?.data.values) {
+					resolve(response.data.values)
 				}
 				resolve([])
 			}
 		)
-	})
+	)
 }
 
 async function getNumberOfRows(
 	spreadsheetId: string,
 	range: string
 ): Promise<number> {
-	return new Promise((resolve) => {
+	return new Promise((resolve) =>
 		sheets.spreadsheets.values.get(
 			{
 				spreadsheetId: spreadsheetId,
 				range: range
 			},
 			(_err, res) => {
-				if (res && res.data.values)
-					for (let n = res.data.values.length - 1; n > 0; n--)
-						if (rowIsFilledOut(res.data.values[n])) resolve(n + 1)
-						else
+				if (res && res.data.values) {
+					for (let n = res.data.values.length - 1; n > 0; n--) {
+						if (rowIsFilledOut(res.data.values[n])) {
+							resolve(n + 1)
+						} else {
 							console.log('Res or Res Values was undefined in getNumberOfRows.')
+						}
+					}
+				}
 			}
 		)
-	})
+	)
 }
 
 function rowIsFilledOut(row: string[]): boolean {
@@ -159,9 +171,11 @@ function rowIsFilledOut(row: string[]): boolean {
 		row[Release.type] &&
 		row[Release.year] &&
 		row[Release.genre]
-	)
+	) {
 		return true
-	else return false
+	} else {
+		return false
+	}
 }
 
 function sendEmail(to: string, subject: string, message: string) {

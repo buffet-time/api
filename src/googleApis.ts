@@ -83,8 +83,9 @@ function getNewToken(
 			resolve(
 				new Promise((resolve) =>
 					oAuth2Client.getToken(code, async (err: any, token: any) => {
-						if (err || !token)
+						if (err || !token) {
 							return console.error('Error retrieving access token', err)
+						}
 
 						oAuth2Client.setCredentials(token)
 						try {
